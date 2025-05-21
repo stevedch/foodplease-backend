@@ -10,7 +10,7 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
     envVars:
-      - key: DATABASE_URL
+      - key: R2DBC_DATABASE_URL
         fromDatabase:
           name: food_please
           property: connectionString
