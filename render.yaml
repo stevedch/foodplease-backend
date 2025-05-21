@@ -12,5 +12,5 @@ services:
     envVars:
       - key: R2DBC_DATABASE_URL
         fromDatabase:
-          name: food_please
+          name: unab
           property: connectionString
