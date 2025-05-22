@@ -16,13 +16,26 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url 'https://repo.spring.io/release' }
+    maven { url 'https://repo.maven.apache.org/maven2' }
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // WebFlux y Seguridad
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // usa Jackson para serializar el payload
+
+    // R2DBC para conexión reactiva a PostgreSQL
+    implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+    runtimeOnly 'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
+
+    // Desarrollo
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-    runtimeOnly 'org.postgresql:postgresql'
+
+    // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
     testImplementation 'org.springframework.security:spring-security-test'
@@ -31,4 +44,8 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named("processTestAot") {
+    enabled = false
 }

@@ -6,6 +6,7 @@ spring:
   application:
     name: foodplease-backend
 
+# Optional: disables Flyway if you're not using it
 flyway:
   enabled: false
 
