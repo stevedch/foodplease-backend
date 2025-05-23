@@ -7,6 +7,7 @@ import com.sdch.foodpleasebackend.dto.AuthRequest;
 import com.sdch.foodpleasebackend.dto.AuthResponse;
 import com.sdch.foodpleasebackend.model.User;
 import com.sdch.foodpleasebackend.router.AuthRouter;
+import com.sdch.foodpleasebackend.router.UserRouter;
 import com.sdch.foodpleasebackend.service.UserService;
 import com.sdch.foodpleasebackend.utils.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,12 +26,12 @@ import reactor.core.publisher.Mono;
 
 @ActiveProfiles("test")
 @SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    properties = {
-      "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration"
-    })
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = {
+                "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration"
+        })
 @AutoConfigureWebTestClient
-@Import({AuthHandler.class, AuthRouter.class, JwtUtil.class})
+@Import({AuthHandler.class, UserHandler.class, AuthRouter.class, UserRouter.class, JwtUtil.class})
 class AuthHandlerIntegrationTest {
 
   private static final String USERNAME = "admin";
@@ -49,45 +50,41 @@ class AuthHandlerIntegrationTest {
 
   @Test
   void loginAndAccessProtectedRoute_shouldSucceed_withValidToken() {
-    // Arrange
     User user = new User();
     user.setUsername(USERNAME);
     user.setPassword(HASHED);
+
     when(userService.findByUsername(USERNAME)).thenReturn(Mono.just(user));
     when(passwordEncoder.matches(PASSWORD, HASHED)).thenReturn(true);
 
-    // Act
     AuthRequest request = new AuthRequest();
     request.setUsername(USERNAME);
     request.setPassword(PASSWORD);
 
     String token =
-        webTestClient
-            .post()
-            .uri("/auth/login")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
-            .exchange()
-            .expectStatus()
-            .isOk()
-            .expectBody(AuthResponse.class)
-            .returnResult()
-            .getResponseBody()
-            .getToken();
+            webTestClient
+                    .post()
+                    .uri("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectBody(AuthResponse.class)
+                    .returnResult()
+                    .getResponseBody()
+                    .getToken();
 
-    // Assert
     assertThat(token).isNotNull();
 
     webTestClient
-        .get()
-        .uri("/api/me")
-        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-        .exchange()
-        .expectStatus()
-        .isOk()
-        .expectBody()
-        .jsonPath("$.user")
-        .isEqualTo(USERNAME);
+            .get()
+            .uri("/api/me")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody()
+            .jsonPath("$.user")
+            .isEqualTo(USERNAME);
   }
 
   @Test
@@ -137,17 +134,63 @@ class AuthHandlerIntegrationTest {
 
   @Test
   void accessProtectedRoute_shouldFail_ifTokenMissing() {
-    webTestClient.get().uri("/api/me").exchange().expectStatus().isUnauthorized();
+    webTestClient
+            .get()
+            .uri("/api/me")
+            .exchange()
+            .expectStatus().isUnauthorized();
   }
 
   @Test
   void accessProtectedRoute_shouldFail_ifTokenInvalid() {
     webTestClient
-        .get()
-        .uri("/api/me")
-        .header(HttpHeaders.AUTHORIZATION, "Bearer faketoken123")
-        .exchange()
-        .expectStatus()
-        .isUnauthorized();
+            .get()
+            .uri("/api/me")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer faketoken123")
+            .exchange()
+            .expectStatus().isUnauthorized();
+  }
+
+  @Test
+  void createUser_shouldSucceed_withValidInput() {
+    String token = jwtUtil.generateToken(USERNAME);
+
+    User userToCreate = new User();
+    userToCreate.setUsername(USERNAME);
+    userToCreate.setPassword(PASSWORD);
+
+    User savedUser = new User();
+    savedUser.setUsername(USERNAME);
+    savedUser.setPassword("hashed-secret");
+
+    when(userService.createUser(any(User.class))).thenReturn(Mono.just(savedUser));
+
+    webTestClient
+            .post()
+            .uri("/api/users")
+            .contentType(MediaType.APPLICATION_JSON)
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+            .bodyValue(userToCreate)
+            .exchange()
+            .expectStatus().isOk()
+            .expectHeader().contentType(MediaType.APPLICATION_JSON)
+            .expectBody()
+            .jsonPath("$.username").isEqualTo("admin")
+            .jsonPath("$.password").isEqualTo("hashed-secret");
+  }
+
+  @Test
+  void me_shouldSucceed_withValidToken() {
+    String token = jwtUtil.generateToken(USERNAME);
+
+    webTestClient
+            .get()
+            .uri("/api/me")
+            .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+            .exchange()
+            .expectStatus().isOk()
+            .expectHeader().contentType(MediaType.APPLICATION_JSON)
+            .expectBody()
+            .jsonPath("$.user").isEqualTo(USERNAME);
   }
 }
