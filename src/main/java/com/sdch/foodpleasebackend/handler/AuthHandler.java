@@ -5,6 +5,7 @@ import com.sdch.foodpleasebackend.dto.AuthResponse;
 import com.sdch.foodpleasebackend.service.UserService;
 import com.sdch.foodpleasebackend.utils.JwtUtil;
 import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -31,14 +32,24 @@ public class AuthHandler {
             auth ->
                 userService
                     .findByUsername(auth.getUsername())
-                    .filter(user -> passwordEncoder.matches(auth.getPassword(), user.getPassword()))
-                    .map(user -> jwtUtil.generateToken(user.getUsername()))
-                    .map(AuthResponse::new)
                     .flatMap(
-                        response ->
-                            ServerResponse.ok()
+                        user -> {
+                          if (!passwordEncoder.matches(auth.getPassword(), user.getPassword())) {
+                            return ServerResponse.status(HttpStatus.UNAUTHORIZED)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .bodyValue(response))
-                    .switchIfEmpty(ServerResponse.badRequest().build()));
+                                .bodyValue(new ErrorResponse("Invalid credentials"));
+                          }
+                          String token = jwtUtil.generateToken(user.getUsername());
+                          return ServerResponse.ok()
+                              .contentType(MediaType.APPLICATION_JSON)
+                              .bodyValue(new AuthResponse(token));
+                        })
+                    .switchIfEmpty(
+                        ServerResponse.status(HttpStatus.UNAUTHORIZED)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .bodyValue(new ErrorResponse("User not found"))));
   }
+
+  // Internal static class for error messages
+  record ErrorResponse(String message) {}
 }

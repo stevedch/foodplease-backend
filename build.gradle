@@ -31,7 +31,6 @@ dependencies {
     // R2DBC para conexión reactiva a PostgreSQL
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
     runtimeOnly 'io.r2dbc:r2dbc-postgresql:0.8.13.RELEASE'
-
     // Desarrollo
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
