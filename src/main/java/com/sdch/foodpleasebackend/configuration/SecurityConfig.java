@@ -24,12 +24,13 @@ public class SecurityConfig {
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
   }
+
   @Bean
   public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
     return http
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
             .authorizeExchange(auth -> auth
-                    .pathMatchers("/auth/login", "/actuator/**").permitAll()
+                    .pathMatchers("/auth/login").permitAll()
                     .pathMatchers(HttpMethod.OPTIONS).permitAll()
                     .pathMatchers("/api/**").authenticated()
                     .anyExchange().permitAll()

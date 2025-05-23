@@ -3,8 +3,18 @@ server:
 
 spring:
   r2dbc:
-    url: ${R2DBC_DATABASE_URL:r2dbc:postgresql://localhost:5432/dummy}
+    url: ${R2DBC_DATABASE_URL:r2dbc:postgresql://food_please_user:food_please_pass@localhost:5432/food_please}
   main:
     web-application-type: reactive
   application:
     name: foodplease-backend
+
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
