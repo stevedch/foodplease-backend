@@ -4,7 +4,7 @@ import java.util.Objects;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("user")
+@Table("users")
 public class User {
 
   @Id private Integer id;
