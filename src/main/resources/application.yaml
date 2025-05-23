@@ -6,9 +6,11 @@ spring:
   application:
     name: foodplease-backend
 
-# Optional: disables Flyway if you're not using it
 flyway:
   enabled: false
+
+server:
+  port: ${PORT:8080}
 
 logging:
   level:
