@@ -99,13 +99,15 @@ class AuthHandlerIntegrationTest {
     request.setPassword(PASSWORD);
 
     webTestClient
-        .post()
-        .uri("/auth/login")
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(request)
-        .exchange()
-        .expectStatus()
-        .isBadRequest();
+            .post()
+            .uri("/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isUnauthorized()
+            .expectHeader().contentType(MediaType.APPLICATION_JSON)
+            .expectBody()
+            .jsonPath("$.message").isEqualTo("User not found");
   }
 
   @Test
@@ -113,6 +115,7 @@ class AuthHandlerIntegrationTest {
     User user = new User();
     user.setUsername(USERNAME);
     user.setPassword(HASHED);
+
     when(userService.findByUsername(USERNAME)).thenReturn(Mono.just(user));
     when(passwordEncoder.matches(PASSWORD, HASHED)).thenReturn(false);
 
@@ -121,13 +124,15 @@ class AuthHandlerIntegrationTest {
     request.setPassword(PASSWORD);
 
     webTestClient
-        .post()
-        .uri("/auth/login")
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(request)
-        .exchange()
-        .expectStatus()
-        .isBadRequest();
+            .post()
+            .uri("/auth/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isUnauthorized()
+            .expectHeader().contentType(MediaType.APPLICATION_JSON)
+            .expectBody()
+            .jsonPath("$.message").isEqualTo("Invalid credentials");
   }
 
   @Test
